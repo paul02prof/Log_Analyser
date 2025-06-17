@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Logs de l'utilisateur</title>
+    <style>
+        :root {
+      --main-color: #8C9EFF;
+      --dark-color: #5C6BC0;
+      --text-light: #ffffff;
+      --text-dark: #2c3e50;
+    }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            background-color: #f0f3fa;
+        }
+.toggle-btn {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background: var(--main-color);
+      color: var(--text-light);
+      padding: 10px 15px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 1100;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -240px;
+      width: 240px;
+      height: 100%;
+      background-color: var(--main-color);
+      color: var(--text-light);
+      transition: left 0.3s ease;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar.open {
+      left: 0;
+    }
+
+    .sidebar h2 {
+      padding: 20px;
+      font-size: 1.5em;
+      text-align: center;
+      background-color: var(--dark-color);
+    }
+
+    .sidebar ul {
+      list-style: none;
+      flex-grow: 1;
+      padding-top: 20px;
+    }
+
+    .sidebar ul li {
+      padding: 15px 25px;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-size: 1.1em;
+    }
+
+    .sidebar ul li:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+        #user-info {
+            margin-bottom: 20px;
+            font-size: 20px;
+      color: var(--text-dark);
+        }
+
+        .filters {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filters label {
+            font-weight: bold;
+        }
+
+        .filters input,
+        .filters select {
+            padding: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+        }
+        #log-table td:nth-child(4) {
+  max-width: 300px;
+  max-height: 10px;
+  overflow-y: auto;
+  word-wrap: break-word;
+  white-space: normal;
+
+}
+        #log-table td:nth-child(5) {
+  max-width: 70px;
+  max-height: 10px;
+  overflow-y: auto;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+           background-color: #8C9EFF;
+            color: white;
+        }
+
+        caption {
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+
+<div class="toggle-btn" onclick="toggleSidebar()">☰</div>
+
+  <div class="sidebar" id="sidebar">
+    <h2>🛠 Admin</h2>
+    <ul>
+      <li onclick="navigate('dashboard')">📄 Dashboard</li>
+      <li onclick="navigate('alertes')">⚠️ Alertes</li>
+      <li onclick="navigate('settings')">⚙️ Paramètres</li>
+    </ul>
+  </div>
+    <div id="user-info">
+        <p><strong>Nom :</strong> <span id="nom"></span>
+        <strong>|   ID  :</strong> <span id="id_user"></span></p>
+    </div>
+
+    <h2>Logs associés à vos hôtes</h2>
+
+    <div class="filters">
+        <div>
+            <label for="date-filter">Date :</label>
+            <input type="date" id="date-filter">
+        </div>
+        <div>
+            <label for="type-filter">Type :</label>
+            <select id="type-filter">
+                <option value="">-- Tous --</option>
+            </select>
+        </div>
+        <div>
+        <label for="process-filter">Process :</label>
+        <select id="process-filter">
+            <option value="">-- Tous --</option>
+        </select>
+        </div>
+        <div>
+            <label for="severity-filter">Gravité :</label>
+            <select id="severity-filter">
+                <option value="">-- Toutes --</option>
+            </select>
+        </div>
+        <div>
+            <label for="host-filter">ID Hôte :</label>
+            <select id="host-filter">
+                <option value="">-- Tous --</option>
+            </select>
+        </div>
+        <div>
+            <button onclick="applyFilters()">Filtrer</button>
+            <button onclick="resetFilters()">Réinitialiser</button>
+        </div>
+    </div>
+
+    <table id="log-table">
+        <caption>Liste des logs</caption>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Heure</th>
+                <th>Message</th>
+                <th>Source</th>
+                <th>PID</th>
+                <th>Type</th>
+                <th>Process</th>
+                <th>Gravité</th>
+                <th>ID Hôte</th>
+            </tr>
+        </thead>
+        <tbody id="log-body">
+            <tr><td colspan="10">Chargement...</td></tr>
+        </tbody>
+    </table>
+
+    <script>
+        let allLogs = [];
+
+        const nom = localStorage.getItem("nom");
+        const id_user = localStorage.getItem("id_user");
+        function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    function navigate(page) {
+
+      window.location.href = " "+page;
+
+      // Exemple : window.location.href = page + ".html";
+    }
+        if (!nom || !id_user) {
+            window.location.href = "signin.html";
+        } else {
+            document.getElementById("nom").textContent = nom;
+            document.getElementById("id_user").textContent = id_user;
+
+            function afficherLogs(logs) {
+                const tbody = document.getElementById("log-body");
+                tbody.innerHTML = "";
+
+                if (logs.length === 0) {
+                    const row = document.createElement("tr");
+                    row.innerHTML = '<td colspan="10">Aucun log correspondant.</td>';
+                    tbody.appendChild(row);
+                    return;
+                }
+
+                logs.forEach(log => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${log.id_log}</td>
+                        <td>${log.date}</td>
+                        <td>${log.time}</td>
+                        <td>${log.message}</td>
+                        <td>${log.source}</td>
+                    <td>${log.pid}</td>
+                    <td>${log.type}</td>
+                    <td>${log.process_nom}</td>
+                    <td>${log.severity}</td>
+                    <td>${log.id_host}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            function applyFilters() {
+                const date = document.getElementById("date-filter").value;
+                const type = document.getElementById("type-filter").value.toLowerCase();
+                const severity = document.getElementById("severity-filter").value;
+                const host = document.getElementById("host-filter").value;
+                const process = document.getElementById("process-filter").value;
+
+
+                const filtered = allLogs.filter(log => {
+                    return (!date || log.date === date) &&
+                        (!type || log.type.toLowerCase().includes(type)) &&
+                        (!severity || log.severity == severity) &&
+                        (!host || log.id_host == host)&&
+                       (!process || log.process_nom == process);
+                });
+
+                afficherLogs(filtered);
+            }
+
+            function resetFilters() {
+                document.getElementById("date-filter").value = "";
+                document.getElementById("type-filter").value = "";
+                document.getElementById("severity-filter").value = "";
+                document.getElementById("host-filter").value = "";
+                 document.getElementById("process-filter").value = "";
+                afficherLogs(allLogs);
+            }
+
+            function remplirSelect(url, selectId) {
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        const select = document.getElementById(selectId);
+                        data.forEach(value => {
+                            const opt = document.createElement("option");
+                            opt.value = value;
+                            opt.textContent = value;
+                            select.appendChild(opt);
+                        });
+                    })
+                    .catch(err => console.error(`Erreur chargement ${selectId}`, err));
+            }
+
+            function chargerFiltres() {
+                remplirSelect("/filter/type", "type-filter");
+                remplirSelect("/filter/severity", "severity-filter");
+                remplirSelect("/filter/process", "process-filter");
+                // Pour ne récupérer que les hôtes de l'utilisateur connecté :
+                fetch(`/filter/hosts/${id_user}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const select = document.getElementById("host-filter");
+                        data.forEach(id => {
+                            const opt = document.createElement("option");
+                            opt.value = id;
+                            opt.textContent = id;
+                            select.appendChild(opt);
+                        });
+                    })
+                    .catch(err => console.error("Erreur chargement hosts", err));
+            }
+
+            window.addEventListener("DOMContentLoaded", () => {
+                chargerFiltres();
+
+                fetch(`/logs/${id_user}`)
+                    .then(response => response.json())
+                    .then(logs => {
+                        allLogs = logs;
+                        afficherLogs(allLogs);
+                    })
+                    .catch(error => {
+                        const tbody = document.getElementById("log-body");
+                        tbody.innerHTML = '<tr><td colspan="10">Erreur lors du chargement.</td></tr>';
+                        console.error("Erreur :", error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

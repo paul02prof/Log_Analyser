@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ajouter un Hôte</title>
+    <style>
+        :root {
+      --main-color: #8C9EFF;
+      --dark-color: #5C6BC0;
+      --text-dark: #2c3e50;
+      --text-light: #ffffff;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #8C9EFF, #C5CAE9);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+    }
+
+    form {
+      background: white;
+      padding: 35px 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+      width: 340px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 25px;
+      color: var(--dark-color);
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    input, select {
+      width: 90%;
+      padding: 10px;
+     padding-right:-10px;
+      margin-top: 20px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      transition: border-color 0.3s ease;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--main-color);
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 25px;
+      padding: 12px;
+      background-color: var(--main-color);
+      color: white;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: var(--dark-color);
+    }
+
+    #message {
+      margin-top: 15px;
+      font-size: 0.95em;
+      font-weight: bold;
+      color: var(--dark-color);
+    }
+    </style>
+</head>
+<body>
+
+
+
+    <form id="host-form">
+        <h2>Ajouter un Hôte</h2>
+
+        <label for="ip">Adresse IP :</label>
+
+        <input type="text" id="ip" name="ip" required>
+
+        <br>
+        <input type="submit" value="Ajouter l'hôte">
+
+           <br> <div id="message"></div>
+    </form>
+
+
+
+    <script>
+        const id_user = localStorage.getItem("id_user");
+        const category = localStorage.getItem("category");
+        if (!id_user) {
+            alert("Veuillez vous connecter.");
+            window.location.href = "signin.html";
+        }
+
+        const form = document.getElementById("host-form");
+        const msg = document.getElementById("message");
+
+        form.addEventListener("submit", function(event) {
+            event.preventDefault();
+            const ip = document.getElementById("ip").value;
+
+            fetch("/add_host", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ ip_address: ip, id_user: id_user })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    msg.style.color = "green";
+                    msg.textContent = "✅ Hôte ajouté avec succès.";
+                     if (category == "Admin" ){
+                        window.location.href = "dash_admin";
+
+                     } else { window.location.href = "dashboard";  }
+
+                } else {
+                    msg.style.color = "red";
+                    msg.textContent = "❌ " + data.message;
+                }
+            })
+            .catch(err => {
+                msg.style.color = "red";
+                msg.textContent = "Erreur serveur.";
+                console.error(err);
+            });
+        });
+    </script>
+
+</body>
+</html>

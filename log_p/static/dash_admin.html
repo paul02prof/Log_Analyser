@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Interface</title>
+  <style>
+    :root {
+      --main-color: #8C9EFF;
+      --dark-color: #5C6BC0;
+      --text-light: #ffffff;
+      --text-dark: #2c3e50;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    body {
+      background-color: #f0f3fa;
+      height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .toggle-btn {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background: var(--main-color);
+      color: var(--text-light);
+      padding: 10px 15px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 1100;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -240px;
+      width: 240px;
+      height: 100%;
+      background-color: var(--main-color);
+      color: var(--text-light);
+      transition: left 0.3s ease;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar.open {
+      left: 0;
+    }
+
+    .sidebar h2 {
+      padding: 20px;
+      font-size: 1.5em;
+      text-align: center;
+      background-color: var(--dark-color);
+    }
+
+    .sidebar ul {
+      list-style: none;
+      flex-grow: 1;
+      padding-top: 20px;
+    }
+
+    .sidebar ul li {
+      padding: 15px 25px;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-size: 1.1em;
+    }
+
+    .sidebar ul li:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .main {
+      padding: 30px 40px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    #user-info {
+      font-size: 25px;
+      color: var(--text-dark);
+    }
+
+    .logout-btn, .add-btn {
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 1em;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .logout-btn {
+      background-color: #e53935;
+      color: white;
+    }
+
+    .logout-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+    }
+
+    .add-btn {
+      background-color: #8C9EFF;
+      color: white;
+    }
+
+    .add-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 30px;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+
+    .card h3 {
+      font-size: 1.4em;
+      margin-bottom: 10px;
+      color: var(--main-color);
+    }
+
+    .card p {
+      font-size: 1.1em;
+      color: #555;
+    }
+
+    .delete-icon {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 20px;
+      color: #E53935;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .delete-icon:hover {
+      transform: scale(1.2);
+    }
+
+    .footer-images {
+      position: fixed;
+      bottom: 10px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 900;
+    }
+
+    .footer-images img {
+      width: 500px;
+      height: 300px;
+      opacity: 0.9;
+      transition: transform 0.3s ease;
+      margin-bottom: -30px;
+      margin-left: -40px;
+    }
+
+    /* Barre d'onglets */
+    .tabs {
+      display: flex;
+      border: 3px solid #99a2ff;
+      border-radius: 10px;
+      overflow: hidden;
+      padding: 1px;
+      gap: 1px;
+      background-color: white;
+      justify-content: space-around;
+      margin-bottom: 8px;
+    }
+
+    .tab {
+      font-size: 15px;
+      font-weight: 600;
+      color: #99a2ff;
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 15px;
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+
+    .tab.active {
+      background-color: #99a2ff;
+      color: white;
+    }
+
+    .tab:hover:not(.active) {
+      background-color: rgba(153, 162, 255, 0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
+
+  <div class="sidebar" id="sidebar">
+    <h2>🛠 Admin</h2>
+    <ul>
+      <li onclick="navigate('logs_page')">📄 Logs Hôtes</li>
+      <li onclick="navigate('alertes')">⚠️ Alertes</li>
+      <li onclick="navigate('settings')">⚙️ Paramètres</li>
+    </ul>
+  </div>
+
+  <div class="main">
+    <div class="header">
+      <div id="user-info">
+        <p><strong>Nom :</strong> <span id="nom"></span> <strong>| ID :</strong> <span id="id_user"></span></p>
+      </div>
+      <a href="add_host"><button class="add-btn">Ajouter hôte</button></a>
+      <a href="add_user_admin"><button class="add-btn">Ajouter User</button></a>
+      <a href="update_user"><button class="add-btn">Update User</button></a>
+      <button class="logout-btn" onclick="logout()">Déconnexion</button>
+    </div>
+
+    <!-- Barre d'onglets -->
+    <div class="tabs">
+      <div class="tab" onclick="loadUsers()">Utilisateurs</div>
+      <div class="tab"  onclick="loadHosts()">Hôtes</div>
+      <div class="tab">Statistiques</div>
+      <div class="tab">Autres</div>
+    </div>
+
+    <!-- Images en bas -->
+  <div class="footer-images">
+    <img src="/static/im1.png" alt="Image Gauche">
+    <img src="/static/im2.png" alt="">
+    <img src="/static/im3.png" alt="Image Droite">
+  </div>
+
+
+
+    <!-- Cartes users -->
+    <div class="cards" id="host-cards">
+      <!-- Les cartes seront générées dynamiquement ici -->
+    </div>
+  </div>
+
+
+
+  <script>
+    const nom = localStorage.getItem("nom");
+    const id_user_ad = localStorage.getItem("id_user");
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    function navigate(page) {
+      window.location.href = page;
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "/";
+    }
+
+    if (!nom || !id_user_ad) {
+      window.location.href = "signin.html";
+    } else {
+      document.getElementById("nom").textContent = nom;
+      document.getElementById("id_user").textContent = id_user_ad;
+
+    }
+    function loadUsers() {
+      fetch(`/all_users`)
+        .then(response => response.json())
+        .then(data => {
+          const container = document.getElementById("host-cards");
+          container.innerHTML = "";
+          data.forEach((user_l, index) => {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML = `
+              <span class="delete-icon" onclick="deleteUser(${user_l.id_user})">🗑️</span>
+              <h3>User #${index + 1}</h3>
+              <p><strong>ID :</strong> ${user_l.id_user}    &nbsp;&nbsp;&nbsp;&nbsp; <strong>Category :</strong> ${user_l.category}</p>
+
+              <p><strong>NOM :</strong> ${user_l.nom} </p>
+            `;
+            container.appendChild(card);
+          });
+        })
+        .catch(err => {
+          console.error("Erreur lors du chargement des hôtes:", err);
+        });
+    }
+
+     function deleteUser(id_user) {
+      if (id_user_ad==id_user ){
+      alert("Suppression impossible ! ");
+
+      }
+
+      else{
+        if (confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) {
+        fetch(`/delete_user/${id_user}`, {
+          method: "DELETE"
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            loadUsers();
+          } else {
+            alert("Erreur lors de la suppression : " + data.message);
+          }
+        });
+       }
+      }
+    }
+
+    function loadHosts() {
+      fetch(`/all_hosts`)
+        .then(response => response.json())
+        .then(data => {
+          const container = document.getElementById("host-cards");
+          container.innerHTML = "";
+          data.forEach((host, index) => {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML = `
+              <span class="delete-icon" onclick="deleteHost(${host.id_host})">🗑️</span>
+              <h3>Hôte #${index + 1}</h3>
+              <p><strong>ID :</strong> ${host.id_host}</p>
+              <p><strong>IP :</strong> ${host.ip_address}</p>
+            `;
+            container.appendChild(card);
+          });
+        })
+        .catch(err => {
+          console.error("Erreur lors du chargement des hôtes:", err);
+        });
+    }
+
+    function deleteHost(id_host) {
+      if (confirm("Voulez-vous vraiment supprimer cet hôte ?")) {
+        fetch(`/delete_host/${id_host}`, {
+          method: "DELETE"
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            loadHosts();
+          } else {
+            alert("Erreur lors de la suppression : " + data.message);
+          }
+        });
+      }
+    }
+
+    // Onglets interactifs
+    document.addEventListener('DOMContentLoaded', function() {
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          tabs.forEach(t => t.classList.remove('active'));
+          this.classList.add('active');
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>
